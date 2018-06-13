@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 # python traffickcam_from_scratch.py margin batch_size output_size learning_rate whichGPU
-# python traffickcam_from_scratch.py .3 120 128 .0001 3
+# python traffickcam_from_scratch.py .3 120 128 .0001 0
 """
 
 import tensorflow as tf
@@ -23,7 +23,7 @@ import time
 import sys
 import itertools
 
-def main(margin,batch_size,output_size,learning_rate,whichGPU,is_finetuning):
+def main(margin,batch_size,output_size,learning_rate,whichGPU):
     def handler(signum, frame):
         print 'Saving checkpoint before closing'
         pretrained_net = os.path.join(ckpt_dir, 'checkpoint-'+param_str)
