@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 # python traffickcam_finetune.py margin batch_size output_size learning_rate whichGPU is_finetuning pretrained_net
-# chop off last layer: python traffickcam_finetune.py .3 120 128 .0001 3 True './models/ilsvrc/resnet_v2_50.ckpt'
-# don't chop off last layer: python traffickcam_finetune.py .3 120 128 .0001 3 False './models/ilsvrc/resnet_v2_50.ckpt'
+# chop off last layer: python traffickcam_finetune.py .3 120 128 .0001 3 True './models/ilsvrc.ckpt'
+# don't chop off last layer: python traffickcam_finetune.py .3 120 128 .0001 3 False './models/ilsvrc.ckpt'
 """
 
 import tensorflow as tf
@@ -37,7 +37,7 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU,is_finetuning,pret
     ckpt_dir = './output/traffickcam/ckpts/finetuning'
     log_dir = './output/traffickcam/logs/finetuning'
     train_filename = './input/traffickcam/train.txt'
-    mean_file = './models/traffickcam/tc_mean_im.npy'
+    mean_file = './models/traffickcam/meanIm.npy'
 
     img_size = [256, 256]
     crop_size = [224, 224]
@@ -89,13 +89,10 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU,is_finetuning,pret
 
     # Queuing op loads data into input tensor
     image_batch = tf.placeholder(tf.float32, shape=[batch_size, crop_size[0], crop_size[0], 3])
-    people_mask_batch = tf.placeholder(tf.float32, shape=[batch_size, crop_size[0], crop_size[0], 1])
-    same_user_batch = tf.placeholder(tf.float32, shape=(batch_size,batch_size))
     label_batch = tf.placeholder(tf.int32, shape=(batch_size))
 
     # doctor image params
     percent_crop = .5
-    percent_people = .5
     percent_rotate = .2
     percent_filters = .4
     percent_text = .1
@@ -184,24 +181,10 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU,is_finetuning,pret
 
     filtered_batch = clip_ops.clip_by_value(adjusted,0.0,255.0)
 
-    # insert people masks
-    num_people_masks = int(batch_size*percent_people)
-    mask_inds = np.random.choice(np.arange(0,batch_size),num_people_masks,replace=False)
-
-    start_masks = np.zeros([batch_size, crop_size[0], crop_size[0], 1],dtype='float32')
-    start_masks[mask_inds,:,:,:] = 1
-
-    inv_start_masks = np.ones([batch_size, crop_size[0], crop_size[0], 1],dtype='float32')
-    inv_start_masks[mask_inds,:,:,:] = 0
-
-    masked_masks = tf.add(inv_start_masks,tf.cast(tf.multiply(people_mask_batch,start_masks),dtype=tf.float32))
-    masked_masks2 = tf.cast(tf.tile(masked_masks,[1, 1, 1, 3]),dtype=tf.float32)
-    masked_batch = tf.multiply(masked_masks,filtered_batch)
-
     # after we've doctored everything, we need to remember to subtract off the mean
     repMeanIm = np.tile(np.expand_dims(train_data.meanImage,0),[batch_size,1,1,1])
     noise = tf.random_normal(shape=[batch_size, crop_size[0], crop_size[0], 1], mean=0.0, stddev=0.0025, dtype=tf.float32)
-    final_batch = tf.add(tf.subtract(masked_batch,repMeanIm),noise)
+    final_batch = tf.add(tf.subtract(filtered_batch,repMeanIm),noise)
 
     print("Preparing network...")
     with slim.arg_scope(resnet_v2.resnet_arg_scope()):
@@ -216,14 +199,9 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU,is_finetuning,pret
             variables_to_restore.append(var)
 
     feat = tf.squeeze(tf.nn.l2_normalize(layers[featLayer],3))
-    convOut = tf.squeeze(tf.get_default_graph().get_tensor_by_name("resnet_v2_50/block4/unit_3/bottleneck_v2/add:0"))
-    # feat = tf.squeeze(tf.nn.l2_normalize(tf.get_default_graph().get_tensor_by_name("resnet_v2_50/pool5:0"),3))
-    # weights = tf.squeeze(tf.get_default_graph().get_tensor_by_name("resnet_v2_50/logits/weights:0"))
-
     expanded_a = tf.expand_dims(feat, 1)
     expanded_b = tf.expand_dims(feat, 0)
     D = tf.reduce_sum(tf.squared_difference(expanded_a, expanded_b), 2)
-    D = D * same_user_batch # set the distance for any pairs from the same user = 0
 
     # if not train_data.isOverfitting:
     #     D_max = tf.reduce_max(D)
@@ -292,28 +270,7 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU,is_finetuning,pret
     for step in range(num_iters):
         start_time = time.time()
         batch, labels, ims = train_data.getBatch()
-
-        # create a mask of which image pairs are from the same user -- we don't want to include those in the loss
-        tc_inds = [ix for ix in range(batch_size) if 'resized_traffickcam' in ims[ix]]
-        tc_labels = [labels[ix] for ix in tc_inds]
-        unique_tc_labels = np.unique(tc_labels)
-        same_user_pairs = []
-        for label in unique_tc_labels:
-            im_inds = np.where(tc_labels==label)[0]
-            for im1_ind,im2_ind in itertools.combinations(im_inds,2):
-                date1 = ims[tc_inds[im1_ind]].split('/')[-1][:13]
-                date2 = ims[tc_inds[im2_ind]].split('/')[-1][:13]
-                if date1 == date2:
-                    same_user_pairs.append((im1_ind,im2_ind))
-
-        same_user_mask = np.ones((batch_size,batch_size),dtype='float32')
-        for im1,im2 in same_user_pairs:
-            same_user_mask[im1,im2] = 0.
-            same_user_mask[im2,im1] = 0.
-
-        people_masks = train_data.getPeopleMasks()
-
-        _, loss_val = sess.run([train_op, loss], feed_dict={image_batch: batch, people_mask_batch: people_masks, same_user_batch: same_user_mask, label_batch: labels})
+        _, loss_val = sess.run([train_op, loss], feed_dict={image_batch: batch, label_batch: labels})
         end_time = time.time()
         duration = end_time-start_time
         out_str = 'Step %d: loss = %.6f -- (%.3f sec)' % (step, loss_val,duration)
