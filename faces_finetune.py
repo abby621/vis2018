@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-# python traffickcam_from_scratch.py margin batch_size output_size learning_rate whichGPU
-# python traffickcam_from_scratch.py .3 120 128 .0001 3
+# python faces_finetune.py margin batch_size output_size learning_rate whichGPU is_finetuning pretrained_net
+# chop off last layer: python faces_finetune.py .3 120 128 .0001 3 True './models/ilsvrc.ckpt'
+# don't chop off last layer: python faces_finetune.py .3 120 128 .0001 3 False './models/ilsvrc.ckpt'
 """
 
 import tensorflow as tf
@@ -23,7 +24,7 @@ import time
 import sys
 import itertools
 
-def main(margin,batch_size,output_size,learning_rate,whichGPU,is_finetuning):
+def main(margin,batch_size,output_size,learning_rate,whichGPU,is_finetuning,pretrained_net):
     def handler(signum, frame):
         print 'Saving checkpoint before closing'
         pretrained_net = os.path.join(ckpt_dir, 'checkpoint-'+param_str)
@@ -33,10 +34,10 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU,is_finetuning):
 
     signal.signal(signal.SIGINT, handler)
 
-    ckpt_dir = './output/traffickcam/ckpts/finetuning'
-    log_dir = './output/traffickcam/logs/finetuning'
-    train_filename = './input/traffickcam/train.txt'
-    mean_file = './models/traffickcam/meanIm.npy'
+    ckpt_dir = './output/faces/ckpts/finetuning'
+    log_dir = './output/faces/logs/finetuning'
+    train_filename = './input/faces/train.txt'
+    mean_file = './models/faces/meanIm.npy'
 
     img_size = [256, 256]
     crop_size = [224, 224]
@@ -189,11 +190,15 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU,is_finetuning):
     with slim.arg_scope(resnet_v2.resnet_arg_scope()):
         _, layers = resnet_v2.resnet_v2_50(final_batch, num_classes=output_size, is_training=True)
 
-    feat = tf.squeeze(tf.nn.l2_normalize(layers[featLayer],3))
-    convOut = tf.squeeze(tf.get_default_graph().get_tensor_by_name("resnet_v2_50/block4/unit_3/bottleneck_v2/add:0"))
-    # feat = tf.squeeze(tf.nn.l2_normalize(tf.get_default_graph().get_tensor_by_name("resnet_v2_50/pool5:0"),3))
-    # weights = tf.squeeze(tf.get_default_graph().get_tensor_by_name("resnet_v2_50/logits/weights:0"))
+    variables_to_restore = []
+    for var in slim.get_model_variables():
+        excluded = False
+        if is_finetuning.lower() == 'true' and var.op.name.startswith('resnet_v2_50/logits') or 'momentum' in var.op.name.lower():
+            excluded = True
+        if not excluded:
+            variables_to_restore.append(var)
 
+    feat = tf.squeeze(tf.nn.l2_normalize(layers[featLayer],3))
     expanded_a = tf.expand_dims(feat, 1)
     expanded_b = tf.expand_dims(feat, 0)
     D = tf.reduce_sum(tf.squared_difference(expanded_a, expanded_b), 2)
@@ -248,13 +253,17 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU,is_finetuning):
 
     # tf will consume any GPU it finds on the system. Following lines restrict it to specific gpus
     c = tf.ConfigProto()
-    c.gpu_options.visible_device_list=whichGPU
+    if not 'abby' in socket.gethostname().lower():
+        c.gpu_options.visible_device_list=whichGPU
 
     print("Starting session...")
     sess = tf.Session(config=c)
     sess.run(init_op)
 
     writer = tf.summary.FileWriter(log_dir, sess.graph)
+
+    restore_fn = slim.assign_from_checkpoint_fn(pretrained_net,variables_to_restore)
+    restore_fn(sess)
 
     print("Start training...")
     ctr  = 0
@@ -294,11 +303,13 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU,is_finetuning):
 
 if __name__ == "__main__":
     args = sys.argv
-    if len(args) < 6:
-        print 'Expected input parameters: margin,batch_size,output_size,learning_rate,whichGPU'
+    if len(args) < 8:
+        print 'Expected input parameters: margin,batch_size,output_size,learning_rate,whichGPU,is_finetuning'
     margin = args[1]
     batch_size = args[2]
     output_size = args[3]
     learning_rate = args[4]
     whichGPU = args[5]
-    main(margin,batch_size,output_size,learning_rate,whichGPU)
+    is_finetuning = args[6]
+    pretrained_net = args[7]
+    main(margin,batch_size,output_size,learning_rate,whichGPU,is_finetuning,pretrained_net)

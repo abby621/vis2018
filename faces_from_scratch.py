@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-# python traffickcam_from_scratch.py margin batch_size output_size learning_rate whichGPU
-# python traffickcam_from_scratch.py .3 120 128 .0001 3
+# python faces_from_scratch.py margin batch_size output_size learning_rate whichGPU
+# python faces_from_scratch.py .3 120 128 .0001 3
 """
 
 import tensorflow as tf
@@ -33,10 +33,10 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU,is_finetuning):
 
     signal.signal(signal.SIGINT, handler)
 
-    ckpt_dir = './output/traffickcam/ckpts/finetuning'
-    log_dir = './output/traffickcam/logs/finetuning'
-    train_filename = './input/traffickcam/train.txt'
-    mean_file = './models/traffickcam/meanIm.npy'
+    ckpt_dir = './output/faces/ckpts/finetuning'
+    log_dir = './output/faces/logs/finetuning'
+    train_filename = './input/faces/train.txt'
+    mean_file = './models/faces/meanIm.npy'
 
     img_size = [256, 256]
     crop_size = [224, 224]
