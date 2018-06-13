@@ -36,7 +36,7 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU):
     ckpt_dir = './output/traffickcam/ckpts/finetuning'
     log_dir = './output/traffickcam/logs/finetuning'
     train_filename = './input/traffickcam/train.txt'
-    mean_file = './models/traffickcam/meanIm.npy'
+    mean_file = './input/traffickcam/meanIm.npy'
 
     img_size = [256, 256]
     crop_size = [224, 224]

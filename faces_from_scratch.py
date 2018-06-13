@@ -36,7 +36,7 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU):
     ckpt_dir = './output/faces/ckpts/finetuning'
     log_dir = './output/faces/logs/finetuning'
     train_filename = './input/faces/train.txt'
-    mean_file = './models/faces/meanIm.npy'
+    mean_file = './input/faces/meanIm.npy'
 
     img_size = [256, 256]
     crop_size = [224, 224]

@@ -37,7 +37,7 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU,is_finetuning,pret
     ckpt_dir = './output/landmarks/ckpts/finetuning'
     log_dir = './output/landmarks/logs/finetuning'
     train_filename = './input/landmarks/train.txt'
-    mean_file = './models/landmarks/meanIm.npy'
+    mean_file = './input/landmarks/meanIm.npy'
 
     img_size = [256, 256]
     crop_size = [224, 224]
