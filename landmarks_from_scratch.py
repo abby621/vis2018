@@ -33,8 +33,8 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU):
 
     signal.signal(signal.SIGINT, handler)
 
-    ckpt_dir = './output/landmarks/ckpts/finetuning'
-    log_dir = './output/landmarks/logs/finetuning'
+    ckpt_dir = './output/landmarks/ckpts/fromScratch'
+    log_dir = './output/landmarks/logs/fromScratch'
     train_filename = './input/landmarks/train.txt'
     mean_file = './input/landmarks/meanIm.npy'
 

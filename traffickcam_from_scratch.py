@@ -33,8 +33,8 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU):
 
     signal.signal(signal.SIGINT, handler)
 
-    ckpt_dir = './output/traffickcam/ckpts/finetuning'
-    log_dir = './output/traffickcam/logs/finetuning'
+    ckpt_dir = './output/traffickcam/ckpts/fromScratch'
+    log_dir = './output/traffickcam/logs/fromScratch'
     train_filename = './input/traffickcam/train.txt'
     mean_file = './input/traffickcam/meanIm.npy'
 

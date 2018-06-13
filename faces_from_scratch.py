@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 # python faces_from_scratch.py margin batch_size output_size learning_rate whichGPU
-# python faces_from_scratch.py .3 120 128 .0001 3
+# python faces_from_scratch.py .3 120 128 .0001 2
 """
 
 import tensorflow as tf
@@ -33,8 +33,8 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU):
 
     signal.signal(signal.SIGINT, handler)
 
-    ckpt_dir = './output/faces/ckpts/finetuning'
-    log_dir = './output/faces/logs/finetuning'
+    ckpt_dir = './output/faces/ckpts/fromScratch'
+    log_dir = './output/faces/logs/fromScratch'
     train_filename = './input/faces/train.txt'
     mean_file = './input/faces/meanIm.npy'
 
