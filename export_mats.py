@@ -90,7 +90,8 @@ def main(dataset,whichGPU,is_finetuning):
             pretrained_nets.append('./models/ilsvrc.ckpt')
 
     outImDir = os.path.join('./output','images',dataset)
-    os.makedirs(outImDir)
+    if not os.path.exists(outImDir):
+        os.makedirs(outImDir)
 
     for pretrained_net in pretrained_nets:
         if not 'ilsvrc' in pretrained_net:
