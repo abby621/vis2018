@@ -14,6 +14,7 @@ import glob
 from shutil import copyfile
 
 def main(dataset,whichGPU,is_finetuning):
+    print dataset, whichGPU, is_finetuning
     if is_finetuning.lower() == 'true':
         nets_dir = os.path.join('./output',dataset,'ckpts','finetuning')
         outfolder = os.path.join('./output','mats',dataset,'finetuning')
@@ -74,7 +75,9 @@ def main(dataset,whichGPU,is_finetuning):
     saver = tf.train.Saver(max_to_keep=100)
 
     snapshot_base = "-".join(max(glob.glob(os.path.join(nets_dir,'checkpoint-*.index')),key=os.path.getctime).split('-')[:2])
+    print 'Snapshot base: ',snapshot_base
     all_snapshots = glob.glob(snapshot_base+'*.index')
+    print 'All snapshots: ',all_snapshots
 
     snapshot_iters = [4999,9999,14999,19999,24999,49999,74999,99999]
 
