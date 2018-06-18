@@ -72,7 +72,7 @@ def main(dataset,whichGPU,is_finetuning):
     snapshot_base = "-".join(max(glob.glob(os.path.join(nets_dir,'checkpoint-*.index')),key=os.path.getctime).split('-')[:2])
     all_snapshots = glob.glob(snapshot_base+'*.index')
 
-    snapshot_iters = [4999,9999,14999,19999,24999,49999,74999,99999,124999]
+    snapshot_iters = [4999,9999,14999,19999,24999,49999,74999,99999]
 
     pretrained_nets = []
     for snapshot in all_snapshots:
