@@ -10,6 +10,7 @@ from nets import resnet_v2
 from scipy.io import savemat
 import pickle
 import sys
+import glob
 
 def main(dataset,whichGPU,is_finetuning):
     if is_finetuning.lower() == 'true':
