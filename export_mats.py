@@ -170,16 +170,14 @@ def main(dataset,whichGPU,is_finetuning):
             savemat(outfile,out_data)
             print outfile
 
-        for cls in np.unique(np.unique(testingLabels)):
-            imdir = os.path.join(outImDir,str(cls))
-            if not os.path.exists(imdir):
-                os.makedirs(imdir)
-            inds = np.where(testingLabels==cls)[0]
-            ims = testingIms[inds]
-            for im in ims:
-                new_path=os.path.join(imdir,im.split('/')[-1])
-                if not os.path.exists(new_path):
-                    copyfile(im,new_path)
+    for im in testingImsAndLabels:
+        cls = im[1]
+        imdir = os.path.join(outImDir,str(cls))
+        if not os.path.exists(imdir):
+            os.makedirs(imdir)
+        new_path=os.path.join(imdir,im[0].split('/')[-1])
+        if not os.path.exists(new_path):
+            copyfile(im[0],new_path)
 
 if __name__ == "__main__":
     args = sys.argv
