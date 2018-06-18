@@ -62,6 +62,9 @@ def main(dataset,whichGPU,is_finetuning):
     else:
         with open (ims_and_labels_path, 'rb') as fp:
             testingImsAndLabels = pickle.load(fp)
+        numTestingIms = len(testingImsAndLabels)
+
+    print 'Num Images: ',numTestingIms
 
     c = tf.ConfigProto()
     c.gpu_options.visible_device_list=whichGPU
