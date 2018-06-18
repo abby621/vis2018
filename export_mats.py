@@ -1,3 +1,4 @@
+# python export_mats.py traffickcam 3 True
 import tensorflow as tf
 from classfile import NonTripletSet
 import os, random, time
@@ -8,6 +9,7 @@ import tensorflow.contrib.slim as slim
 from nets import resnet_v2
 from scipy.io import savemat
 import pickle
+import sys
 
 def main(dataset,whichGPU,is_finetuning):
     if is_finetuning.lower() == 'true':
