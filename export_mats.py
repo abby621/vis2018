@@ -11,6 +11,7 @@ from scipy.io import savemat
 import pickle
 import sys
 import glob
+from shutil import copyfile
 
 def main(dataset,whichGPU,is_finetuning):
     if is_finetuning.lower() == 'true':
@@ -96,6 +97,7 @@ def main(dataset,whichGPU,is_finetuning):
     if not os.path.exists(outImDir):
         os.makedirs(outImDir)
 
+    print 'Pretrained nets: ',pretrained_nets
     for pretrained_net in pretrained_nets:
         if not 'ilsvrc' in pretrained_net:
             numIters = int(pretrained_net.split('-')[-1].split('.index')[0])
@@ -140,6 +142,7 @@ def main(dataset,whichGPU,is_finetuning):
                 imdir = os.path.join(outImDir,str(cls))
                 new_path=os.path.join(imdir,im.split('/')[-1])
                 new_ims.append(new_path)
+
             testingIms[idx:idx+batch_size] = new_ims
             ff, gg, cvOut, wgts, bs = sess.run([non_norm_feat,gap,convOut,weights,biases], feed_dict={image_batch: batch, label_batch:labels})
             testingFeats[idx:idx+batch_size,:] = np.squeeze(ff)
@@ -162,17 +165,16 @@ def main(dataset,whichGPU,is_finetuning):
             savemat(outfile,out_data)
             print outfile
 
-    from shutil import copyfile
-    for cls in np.unique(np.unique(testingLabels)):
-        imdir = os.path.join(outImDir,str(cls))
-        if not os.path.exists(imdir):
-            os.makedirs(imdir)
-        inds = np.where(testingLabels==cls)[0]
-        ims = testingIms[inds]
-        for im in ims:
-            new_path=os.path.join(imdir,im.split('/')[-1])
-            if not os.path.exists(new_path):
-                copyfile(im,new_path)
+        for cls in np.unique(np.unique(testingLabels)):
+            imdir = os.path.join(outImDir,str(cls))
+            if not os.path.exists(imdir):
+                os.makedirs(imdir)
+            inds = np.where(testingLabels==cls)[0]
+            ims = testingIms[inds]
+            for im in ims:
+                new_path=os.path.join(imdir,im.split('/')[-1])
+                if not os.path.exists(new_path):
+                    copyfile(im,new_path)
 
 if __name__ == "__main__":
     args = sys.argv
