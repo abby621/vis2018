@@ -17,16 +17,16 @@ def main(dataset,whichGPU,is_finetuning):
     print dataset, whichGPU, is_finetuning
     if is_finetuning.lower() == 'true':
         nets_dir = os.path.join('./output',dataset,'ckpts','finetuning')
-        outfolder = os.path.join('./output','mats',dataset,'finetuning')
+        outMatFolder = os.path.join('./output','mats',dataset,'finetuning')
     else:
         nets_dir = os.path.join('./output',dataset,'ckpts','fromScratch')
-        outfolder = os.path.join('./output','mats',dataset,'finetuning')
+        outMatFolder = os.path.join('./output','mats',dataset,'finetuning')
 
     test_file = os.path.join('./input',dataset,'test.txt')
     mean_file = os.path.join('./input',dataset,'meanIm.npy')
 
-    if not os.path.exists(outfolder):
-        os.makedirs(outfolder)
+    if not os.path.exists(outMatFolder):
+        os.makedirs(outMatFolder)
 
     img_size = [256, 256]
     crop_size = [224, 224]
@@ -85,15 +85,17 @@ def main(dataset,whichGPU,is_finetuning):
     for snapshot in all_snapshots:
         numIters = int(snapshot.split('-')[-1].split('.index')[0])
         if numIters in snapshot_iters:
-            iterFolder = os.path.join(outfolder,str(numIters))
+            iterFolder = os.path.join(outMatFolder,str(numIters))
             if not os.path.exists(iterFolder):
                 os.makedirs(iterFolder)
+            if len(os.listdir(iterFolder)) != len(test_data.files):
                 pretrained_nets.append(snapshot.split('.index')[0])
 
     if is_finetuning:
-        iterFolder = os.path.join(outfolder,str(0))
+        iterFolder = os.path.join(outMatFolder,str(0))
         if not os.path.exists(iterFolder):
             os.makedirs(iterFolder)
+        if len(os.listdir(iterFolder)) != len(test_data.files):
             pretrained_nets.append('./models/ilsvrc.ckpt')
 
     outImDir = os.path.join('./output','images',dataset)
@@ -163,7 +165,7 @@ def main(dataset,whichGPU,is_finetuning):
             out_data['weights'] = wgts
             out_data['biases'] = bs
 
-            iterFolder = os.path.join(outfolder,str(numIters))
+            iterFolder = os.path.join(outMatFolder,str(numIters))
             outfile = os.path.join(iterFolder,str(cls)+'.mat')
             savemat(outfile,out_data)
             print outfile
